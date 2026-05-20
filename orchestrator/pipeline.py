@@ -1,39 +1,77 @@
-from agents.market_data_agent import MarketDataAgent
-from agents.sentiment_agent import SentimentAgent
+from typing import Any, Dict, List
+
 from agents.analyst_agent import AnalystReportAgent
+from agents.aggregation_agent import AggregationAgent
 from agents.backtesting_agent import BacktestingAgent
 from agents.decision_agent import DecisionAgent
+from agents.market_data_agent import MarketDataAgent
+from agents.sentiment_agent import SentimentAgent
+from schemas.agent_models import AgentTraceStep
+
+
+WORKFLOW = [
+    "market",
+    "sentiment",
+    "analyst",
+    "aggregation",
+    "backtesting",
+    "decision",
+]
 
 
 class TradingPipeline:
-    """Simple orchestrator that executes the trading agent workflow."""
+    """Orchestrator that executes a declarative workflow and captures execution trace."""
 
     def __init__(self) -> None:
-        self.market_agent = MarketDataAgent()
-        self.sentiment_agent = SentimentAgent()
-        self.analyst_agent = AnalystReportAgent()
-        self.backtesting_agent = BacktestingAgent()
-        self.decision_agent = DecisionAgent()
-
-    def run(self, ticker: str) -> dict:
-        market_output = self.market_agent.run({"ticker": ticker})
-        sentiment_output = self.sentiment_agent.run({"ticker": ticker})
-        analyst_output = self.analyst_agent.run({"ticker": ticker})
-        backtesting_output = self.backtesting_agent.run({"ticker": ticker})
-
-        decision_input = {
-            "market": market_output,
-            "sentiment": sentiment_output,
-            "analyst": analyst_output,
-            "backtest": backtesting_output,
+        self.agents = {
+            "market": MarketDataAgent(),
+            "sentiment": SentimentAgent(),
+            "analyst": AnalystReportAgent(),
+            "aggregation": AggregationAgent(),
+            "backtesting": BacktestingAgent(),
+            "decision": DecisionAgent(),
         }
-        decision_output = self.decision_agent.run(decision_input)
+
+    def _build_step_input(self, step: str, ticker: str, outputs: Dict[str, Any]) -> Dict[str, Any]:
+        if step == "market":
+            return {"ticker": ticker}
+        if step == "sentiment":
+            return {"ticker": ticker}
+        if step == "analyst":
+            return {"ticker": ticker}
+        if step == "aggregation":
+            return {
+                "market": outputs["market"],
+                "sentiment": outputs["sentiment"],
+                "analyst": outputs["analyst"],
+            }
+        if step == "backtesting":
+            return {"ticker": ticker}
+        if step == "decision":
+            return {
+                "aggregate": outputs["aggregation"],
+                "backtest": outputs["backtesting"],
+            }
+        raise ValueError(f"Unknown workflow step: {step}")
+
+    def run(self, ticker: str) -> Dict[str, Any]:
+        trace: List[AgentTraceStep] = []
+        outputs: Dict[str, Any] = {}
+
+        for step in WORKFLOW:
+            agent = self.agents[step]
+            step_input = self._build_step_input(step, ticker, outputs)
+            step_output = agent.run(step_input)
+
+            trace.append({
+                "agent": agent.__class__.__name__,
+                "input": step_input,
+                "output": step_output,
+            })
+            outputs[step] = step_output
 
         return {
-            "ticker": ticker.upper(),
-            "market": market_output,
-            "sentiment": sentiment_output,
-            "analyst": analyst_output,
-            "backtest": backtesting_output,
-            "decision": decision_output,
+            "result": outputs["decision"],
+            "outputs": outputs,
+            "trace": trace,
         }

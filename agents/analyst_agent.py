@@ -1,4 +1,5 @@
 from data.mock_data import ANALYST_REPORTS
+from schemas.agent_models import AnalystOutput
 
 
 class AnalystReportAgent:
@@ -24,7 +25,7 @@ class AnalystReportAgent:
             "overall_sentiment": overall,
         }
 
-    def run(self, input_dict: dict) -> dict:
+    def run(self, input_dict: dict) -> AnalystOutput:
         report_text = input_dict.get("report_text")
         ticker = input_dict.get("ticker")
 
@@ -45,7 +46,7 @@ class AnalystReportAgent:
             insights.append({"signal": "Neutral", "reason": "Report language is balanced between opportunities and risks."})
 
         return {
-            "ticker": ticker.upper() if ticker else None,
+            "ticker": ticker.upper() if ticker else "UNKNOWN",
             "insights": insights,
             "report_summary": report_text,
             "overall_sentiment": signals["overall_sentiment"],

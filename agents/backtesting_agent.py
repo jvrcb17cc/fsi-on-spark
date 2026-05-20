@@ -1,4 +1,5 @@
 from data.mock_data import HISTORICAL_PRICE_SERIES
+from schemas.agent_models import BacktestOutput
 
 
 class BacktestingAgent:
@@ -34,7 +35,7 @@ class BacktestingAgent:
             "max_drawdown_pct": round(max_drawdown, 2),
         }
 
-    def run(self, input_dict: dict) -> dict:
+    def run(self, input_dict: dict) -> BacktestOutput:
         ticker = input_dict.get("ticker")
         historical_data = input_dict.get("historical_data")
 
@@ -45,7 +46,7 @@ class BacktestingAgent:
 
         metrics = self._calculate_metrics(historical_data)
         return {
-            "ticker": ticker.upper() if ticker else None,
+            "ticker": ticker.upper() if ticker else "UNKNOWN",
             "performance_metrics": metrics,
             "data_points": len(historical_data),
         }

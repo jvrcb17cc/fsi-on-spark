@@ -1,10 +1,11 @@
 from data.mock_data import MARKET_DATA
+from schemas.agent_models import MarketDataOutput
 
 
 class MarketDataAgent:
     """Market data agent that returns structured, deterministic ticker statistics."""
 
-    def run(self, input_dict: dict) -> dict:
+    def run(self, input_dict: dict) -> MarketDataOutput:
         ticker = input_dict.get("ticker")
         if not ticker:
             raise ValueError("MarketDataAgent requires a ticker in input_dict")

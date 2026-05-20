@@ -1,36 +1,32 @@
+import argparse
+import json
+from typing import Any, Dict
+
 from orchestrator.pipeline import TradingPipeline
 
 
-def format_section(title: str, content: dict) -> str:
-    lines = [f"=== {title} ==="]
-    for key, value in content.items():
-        lines.append(f"{key}: {value}")
-    return "\n".join(lines)
-
-
-def print_pipeline_result(result: dict) -> None:
-    print(format_section("Market Data", result["market"]))
+def print_section(title: str, data: Dict[str, Any]) -> None:
+    print(f"=== {title} ===")
+    print(json.dumps(data, indent=2))
     print()
-    print(format_section("Sentiment", result["sentiment"]))
-    print()
-    print(format_section("Analyst Report", {
-        "overall_sentiment": result["analyst"]["overall_sentiment"],
-        "insights": result["analyst"]["insights"],
-    }))
-    print()
-    print(format_section("Backtesting", result["backtest"]["performance_metrics"]))
-    print()
-    print(format_section("Decision", result["decision"]))
 
 
 def main() -> None:
-    ticker = "NVDA"
+    parser = argparse.ArgumentParser(description="Run the trading multi-agent pipeline.")
+    parser.add_argument("--ticker", default="NVDA", help="Ticker symbol to analyze")
+    args = parser.parse_args()
+
+    ticker = args.ticker.upper()
     print(f"Running trading pipeline for ticker: {ticker}\n")
 
     pipeline = TradingPipeline()
     result = pipeline.run(ticker)
 
-    print_pipeline_result(result)
+    for stage, output in result["outputs"].items():
+        print_section(f"Stage: {stage}", output)
+
+    print_section("Final Decision", result["result"])
+    print_section("Execution Trace", {"trace": result["trace"]})
 
 
 if __name__ == "__main__":

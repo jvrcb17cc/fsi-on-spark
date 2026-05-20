@@ -1,10 +1,11 @@
 from data.mock_data import NEWS_SENTIMENT
+from schemas.agent_models import SentimentOutput
 
 
 class SentimentAgent:
     """Sentiment agent that evaluates a mock news dataset and returns a score."""
 
-    def run(self, input_dict: dict) -> dict:
+    def run(self, input_dict: dict) -> SentimentOutput:
         ticker = input_dict.get("ticker")
         if not ticker:
             raise ValueError("SentimentAgent requires a ticker in input_dict")
